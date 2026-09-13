@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Tides</title>
+<meta name="theme-color" content="#1B1420" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="icon" href="./icons/favicon.png" type="image/png" />
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Tides" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+  :root{
+    --bg:#1B1420;
+    --card:#241A2B;
+    --card-2:#2C2033;
+    --line: rgba(246,239,234,0.09);
+    --text:#F6EFEA;
+    --text-dim:#B7A7B6;
+    --text-faint:#8B7C8A;
+
+    --rose:#E48C9C;
+    --rose-dim:#3B2530;
+    --rose-glow: rgba(228,140,156,.38);
+
+    --teal:#5FC6BC;
+    --teal-dim:#1C3634;
+    --teal-glow: rgba(95,198,188,.34);
+
+    --gold:#E7B84E;
+    --gold-dim:#3A2E17;
+    --gold-glow: rgba(231,184,78,.30);
+
+    --moon-light:#F6E7C4;
+    --moon-dark:#14101A;
+
+    --r-lg: 30px;
+    --r-md: 18px;
+    --r-sm: 12px;
+    --r-pill: 999px;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Manrope', sans-serif;
+    background:
+      radial-gradient(560px 420px at 12% -6%, var(--rose-glow), transparent 60%),
+      radial-gradient(520px 420px at 105% 18%, var(--gold-glow), transparent 55%),
+      radial-gradient(600px 520px at 90% 100%, var(--teal-glow), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    min-height:100%;
+    display:flex;
+    justify-content:center;
+    padding:32px 16px;
+  }
+  h1,h2,h3,.serif{ font-family:'Fraunces', serif; font-weight:500; letter-spacing:-0.01em; }
+  button{ font-family:inherit; cursor:pointer; }
+  input, select{ font-family:inherit; }
+  :focus-visible{ outline:2px solid var(--teal); outline-offset:2px; }
+
+  .app{
+    width:100%;
+    max-width:428px;
+    background:linear-gradient(180deg, var(--card), var(--bg) 92%);
+    border:1px solid var(--line);
+    border-radius:36px;
+    box-shadow: 0 30px 70px rgba(0,0,0,.45);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    min-height:780px;
+    position:relative;
+  }
+
+  /* ---------- header ---------- */
+  .app-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:26px 22px 6px;
+  }
+  .brand{ display:flex; flex-direction:column; gap:2px; }
+  .brand .name{ font-size:1.5rem; }
+  .brand .tag{ font-size:.75rem; color:var(--text-faint); }
+  .icon-btn{
+    width:40px;height:40px;border-radius:var(--r-pill);
+    background:var(--card-2); border:1px solid var(--line); color:var(--text-dim);
+    display:flex; align-items:center; justify-content:center;
+    transition: background .15s ease, color .15s ease;
+  }
+  .icon-btn:hover{ background:var(--rose-dim); color:var(--rose); }
+  .icon{ width:20px; height:20px; }
+  .icon svg{ width:100%; height:100%; }
+
+  /* ---------- screens ---------- */
+  .screens{ flex:1; overflow-y:auto; padding:14px 20px 110px; }
+  .screens::-webkit-scrollbar{ width:0; }
+  .screen{ display:none; animation: rise .35s ease; }
+  .screen.active{ display:block; }
+  @keyframes rise{ from{ opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+  .section-label{ font-size:.8rem; color:var(--text-faint); margin:22px 0 10px; }
+  .section-label:first-child{ margin-top:4px; }
+
+  /* ---------- bento grid (home) ---------- */
+  .bento{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+  .bento .full{ grid-column: 1 / -1; }
+
+  .card{
+    background:var(--card-2);
+    border:1px solid var(--line);
+    border-radius:var(--r-md);
+    padding:16px;
+  }
+
+  .hero-card{
+    background: linear-gradient(155deg, var(--rose-dim), var(--card-2) 70%);
+    border-radius: 40px 40px 40px 14px;
+    padding:22px 20px;
+    display:flex; align-items:center; gap:16px;
+    border:1px solid rgba(228,140,156,.18);
+    position:relative;
+  }
+  .hero-card.just-logged::after{
+    content:''; position:absolute; inset:0; border-radius:inherit;
+    border:2px solid var(--rose); opacity:.9; animation: ripple .9s ease-out; pointer-events:none;
+  }
+  @keyframes ripple{ to{ transform:scale(1.12); opacity:0; } }
+
+  .moon-orbit{ position:relative; flex-shrink:0; width:92px; height:92px; display:flex; align-items:center; justify-content:center; }
+  .moon-orbit svg{ position:absolute; inset:0; overflow:visible; }
+  .hero-moon-wrap{
+    filter: drop-shadow(0 0 20px var(--rose-glow));
+    animation: moonReveal .7s cubic-bezier(.34,1.56,.64,1) both,
+               breathe 5.5s ease-in-out .7s infinite;
+  }
+  .moon-orbit svg{ animation: ringReveal .7s ease .12s both; }
+  @keyframes moonReveal{ from{ opacity:0; transform:scale(.8) rotate(-10deg); } to{ opacity:1; transform:scale(1) rotate(0); } }
+  @keyframes ringReveal{ from{ opacity:0; transform:scale(.85); } to{ opacity:1; transform:scale(1); } }
+  @keyframes breathe{
+    0%,100%{ transform:scale(1); filter:drop-shadow(0 0 20px var(--rose-glow)); }
+    50%{ transform:scale(1.035); filter:drop-shadow(0 0 28px var(--rose-glow)); }
+  }
+  .moon{ border-radius:50%; background:var(--moon-dark); overflow:hidden; }
+  .hero-info{ flex:1; min-width:0; }
+  .hero-info .phase{ font-size:.78rem; color:var(--rose); font-weight:600; }
+  .hero-info .day{ font-size:1.7rem; margin:2px 0 4px; }
+  .hero-info .sub{ font-size:.8rem; color:var(--text-dim); line-height:1.4; }
+  .hero-cta{
+    margin-top:12px; display:inline-flex; align-items:center; gap:6px;
+    background:var(--rose); color:#2A151C; font-weight:700; font-size:.78rem;
+    padding:9px 14px; border-radius:var(--r-pill); border:none;
+  }
+  .hero-cta.ghost{ background:transparent; color:var(--rose); border:1px solid rgba(228,140,156,.4); }
+
+  .mini-tile{ cursor:pointer; transition: transform .15s ease, border-color .15s ease; }
+  .mini-tile:hover{ transform: translateY(-2px); }
+  .mini-tile .row{ display:flex; align-items:center; justify-content:space-between; }
+  .mini-tile .label{ font-size:.78rem; color:var(--text-dim); display:flex; align-items:center; gap:6px; }
+  .mini-tile .val{ font-size:1.15rem; margin-top:8px; }
+  .mini-tile .val small{ font-size:.7rem; color:var(--text-faint); font-weight:400; }
+  .mini-tile.water{ border-color: rgba(95,198,188,.25); }
+  .mini-tile.steps{ border-color: rgba(231,184,78,.25); }
+
+  .bar-track{ height:8px; border-radius:var(--r-pill); background:rgba(255,255,255,.07); overflow:hidden; margin-top:10px; }
+  .bar-fill{ height:100%; border-radius:var(--r-pill); transition:width .4s ease; }
+  .bar-fill.water{ background:linear-gradient(90deg, var(--teal), #8fe1d8); }
+  .bar-fill.steps{ background:linear-gradient(90deg, var(--gold), #f3d488); }
+
+  .tip-card{
+    display:flex; gap:10px; align-items:flex-start;
+    background:var(--card-2); border:1px dashed var(--line);
+  }
+  .tip-card .dot{ width:6px; height:6px; border-radius:50%; background:var(--gold); margin-top:7px; flex-shrink:0; }
+  .tip-card p{ font-size:.85rem; color:var(--text-dim); line-height:1.5; }
+
+  /* ---------- chips / buttons ---------- */
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .chip{
+    padding:8px 13px; border-radius:var(--r-pill); font-size:.8rem; font-weight:600;
+    background:var(--card); border:1px solid var(--line); color:var(--text-dim);
+    transition: all .15s ease;
+  }
+  .chip:hover{ border-color:var(--teal); color:var(--teal); }
+  .chip.tag{ font-weight:500; }
+  .chip.tag.selected{ background:var(--rose-dim); border-color:var(--rose); color:var(--rose); }
+
+  .custom-add{ display:flex; gap:8px; margin-top:12px; }
+  .custom-add input{
+    flex:1; background:var(--card); border:1px solid var(--line); border-radius:var(--r-sm);
+    padding:10px 12px; color:var(--text); font-size:.85rem;
+  }
+  .custom-add button{
+    background:var(--teal); color:#0E2622; font-weight:700; border:none; border-radius:var(--r-sm);
+    padding:0 16px; font-size:.85rem;
+  }
+  .screen#screen-steps .custom-add button{ background:var(--gold); color:#2E230A; }
+
+  /* ---------- cycle screen ---------- */
+  .moon-strip{ display:flex; gap:14px; overflow-x:auto; padding:6px 2px 14px; }
+  .moon-strip::-webkit-scrollbar{ display:none; }
+  .moon-day{ display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; opacity:.55; }
+  .moon-day.today{ opacity:1; }
+  .moon-day .lbl{ font-size:.68rem; color:var(--text-faint); }
+  .moon-day.today .lbl{ color:var(--rose); font-weight:700; }
+  .moon-day .dnum{ font-size:.7rem; color:var(--text-dim); }
+
+  .predict-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--line); }
+  .predict-row:last-child{ border-bottom:none; }
+  .predict-row .k{ font-size:.82rem; color:var(--text-dim); }
+  .predict-row .v{ font-size:.88rem; font-weight:600; }
+
+  .history-item{ display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); font-size:.83rem; }
+  .history-item:last-child{ border-bottom:none; }
+  .history-item .len{ color:var(--text-faint); }
+
+  /* ---------- hydrate screen ---------- */
+  .glass{
+    position:relative; width:150px; height:190px; margin:10px auto 6px;
+    border:2px solid rgba(95,198,188,.5); border-radius: 8px 8px 34px 34px / 8px 8px 46px 46px;
+    overflow:hidden; background:rgba(95,198,188,.05);
+  }
+  .glass .fill{
+    position:absolute; left:-4px; right:-4px; bottom:0; height:0%;
+    background: linear-gradient(180deg, #7fd7cd, var(--teal) 60%);
+    transition: height .5s ease;
+  }
+  .glass .fill::before{
+    content:''; position:absolute; top:-9px; left:0; right:0; height:18px;
+    background: radial-gradient(ellipse at center, #8fe1d8 45%, transparent 46%);
+    background-size: 26px 18px;
+    background-repeat: repeat-x;
+    animation: waveMove 3.2s linear infinite;
+  }
+  @keyframes waveMove{ from{background-position-x:0;} to{background-position-x:26px;} }
+  .glass .amt{ position:relative; z-index:2; text-align:center; padding-top:70px; font-size:1rem; font-weight:700; mix-blend-mode:difference; }
+
+  .goal-edit{ display:flex; align-items:center; justify-content:center; gap:8px; margin-top:6px; }
+  .goal-edit span{ font-size:.78rem; color:var(--text-faint); }
+  .goal-edit button.link{ background:none; border:none; color:var(--teal); font-size:.78rem; font-weight:700; text-decoration:underline; }
+
+  .reminder-row{ display:flex; align-items:center; justify-content:space-between; }
+  .toggle{
+    width:44px; height:25px; border-radius:var(--r-pill); background:var(--card); border:1px solid var(--line);
+    position:relative; flex-shrink:0;
+  }
+  .toggle .knob{ position:absolute; top:2px; left:2px; width:19px; height:19px; border-radius:50%; background:var(--text-faint); transition:all .2s ease; }
+  .toggle.on{ background:var(--teal-dim); border-color:var(--teal); }
+  .toggle.on .knob{ left:23px; background:var(--teal); }
+
+  .log-list{ margin-top:6px; }
+  .log-row{ display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); font-size:.82rem; }
+  .log-row:last-child{ border-bottom:none; }
+  .log-row .rm{ background:none; border:none; color:var(--text-faint); font-size:1rem; line-height:1; }
+
+  /* ---------- steps screen ---------- */
+  .current-track{
+    height:16px; border-radius:var(--r-pill); background:rgba(255,255,255,.06); overflow:hidden;
+    margin:14px 0 4px; position:relative;
+  }
+  .current-fill{
+    height:100%; border-radius:var(--r-pill);
+    background: linear-gradient(90deg, var(--gold), #f6dfa0, var(--gold));
+    background-size:200% 100%;
+    animation: flow 2.6s linear infinite;
+    transition: width .5s ease;
+  }
+  @keyframes flow{ from{background-position-x:0%;} to{background-position-x:-200%;} }
+
+  .week-chart{ display:flex; align-items:flex-end; gap:8px; height:90px; margin-top:10px; }
+  .week-chart .col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end; }
+  .week-chart .b{ width:100%; border-radius:6px 6px 2px 2px; background:var(--gold-dim); position:relative; min-height:3px; }
+  .week-chart .b.hit{ background:var(--gold); }
+  .week-chart .lbl{ font-size:.62rem; color:var(--text-faint); }
+
+  /* ---------- bottom nav ---------- */
+  .bottom-nav{
+    position:absolute; left:0; right:0; bottom:0;
+    display:flex; background:rgba(27,20,32,.92); backdrop-filter:blur(10px);
+    border-top:1px solid var(--line); padding:10px 8px 16px;
+  }
+  .nav-btn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+    background:none; border:none; color:var(--text-faint); font-size:.66rem; padding:6px 0; font-weight:600;
+    border-radius:var(--r-sm); transition:color .15s ease;
+  }
+  .nav-btn .icon{ width:21px; height:21px; }
+  .nav-btn.active[data-tab="home"]{ color:var(--text); }
+  .nav-btn.active[data-tab="cycle"]{ color:var(--rose); }
+  .nav-btn.active[data-tab="hydrate"]{ color:var(--teal); }
+  .nav-btn.active[data-tab="steps"]{ color:var(--gold); }
+
+  /* ---------- onboarding ---------- */
+  .onboarding{ padding:40px 26px; }
+  .onboarding h1{ font-size:1.9rem; margin-bottom:8px; }
+  .onboarding p.lead{ color:var(--text-dim); font-size:.9rem; line-height:1.5; margin-bottom:28px; }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:.78rem; color:var(--text-dim); margin-bottom:6px; }
+  .field input{
+    width:100%; background:var(--card-2); border:1px solid var(--line); border-radius:var(--r-sm);
+    padding:12px 13px; color:var(--text); font-size:.9rem;
+  }
+  .field-row{ display:flex; gap:12px; }
+  .field-row .field{ flex:1; }
+  .primary-btn{
+    width:100%; margin-top:10px; background:var(--rose); color:#2A151C; font-weight:700;
+    border:none; border-radius:var(--r-pill); padding:15px; font-size:.92rem;
+  }
+
+  /* ---------- settings sheet ---------- */
+  .sheet-backdrop{
+    position:absolute; inset:0; background:rgba(10,7,12,.55); z-index:9; opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .sheet-backdrop.show{ opacity:1; pointer-events:auto; }
+  .sheet{
+    position:absolute; left:0; right:0; bottom:0; z-index:10;
+    background:var(--card); border-radius:26px 26px 0 0; border:1px solid var(--line); border-bottom:none;
+    padding:22px 22px 28px; transform:translateY(100%); transition:transform .25s ease;
+    max-height:82%; overflow-y:auto;
+  }
+  .sheet.show{ transform:translateY(0); }
+  .sheet h2{ font-size:1.2rem; margin-bottom:16px; }
+  .sheet-close{ position:absolute; top:18px; right:18px; }
+  .danger-btn{
+    width:100%; margin-top:8px; background:transparent; color:#E4738C; border:1px solid rgba(228,115,140,.4);
+    border-radius:var(--r-sm); padding:12px; font-size:.85rem; font-weight:600;
+  }
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:absolute; left:20px; right:20px; bottom:100px; z-index:20;
+    background:var(--card-2); border:1px solid var(--line); border-radius:var(--r-md);
+    padding:13px 15px; font-size:.83rem; display:flex; align-items:center; gap:10px;
+    box-shadow:0 12px 30px rgba(0,0,0,.4);
+    transform:translateY(12px); opacity:0; transition:all .25s ease; pointer-events:none;
+  }
+  .toast.show{ transform:translateY(0); opacity:1; }
+
+  .loading{ display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-faint); font-size:.85rem; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <div class="loading" id="loading">loading tides…</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  // Standalone-deploy storage shim: mirrors Claude's window.storage API using
+  // the browser's own localStorage, so this file works once hosted on a real URL.
+  window.storage = {
+    async get(key, shared){
+      const v = localStorage.getItem(key);
+      if(v === null){ throw new Error('not found'); }
+      return { key, value: v, shared: !!shared };
+    },
+    async set(key, value, shared){
+      localStorage.setItem(key, value);
+      return { key, value, shared: !!shared };
+    },
+    async delete(key, shared){
+      localStorage.removeItem(key);
+      return { key, deleted: true, shared: !!shared };
+    },
+    async list(prefix, shared){
+      const keys = [];
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(!prefix || k.startsWith(prefix)) keys.push(k);
+      }
+      return { keys, prefix, shared: !!shared };
+    }
+  };
+})();
+
+(function(){
+  "use strict";
+
+  /* ================= ICONS ================= */
+  const ICONS = {
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>',
+    moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 7 7 0 0 0 20 14.5z"/></svg>',
+    drop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s6.5 7.8 6.5 12A6.5 6.5 0 1 1 5.5 14C5.5 9.8 12 2 12 2z"/></svg>',
+    wave: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12c1.7-3 3.6-3 5.3 0s3.6 3 5.3 0 3.6-3 5.3 0 3.6 3 5.1 0"/></svg>',
+    sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="var(--bg)"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2" fill="var(--bg)"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="10" cy="18" r="2" fill="var(--bg)"/></svg>',
+    close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>'
+  };
+
+  /* ================= STATE ================= */
+  let state = { profile: null, cycle: null, daily: null };
+  let activeTab = 'home';
+  let reminderTimer = null;
+  let justLogged = false;
+
+  const SYMPTOM_TAGS = ['Cramps','Headache','Bloating','Fatigue','Mood swings','Backache','Cravings','Energetic','Calm','Happy'];
+
+  const TIPS = {
+    menstrual: ["Rest counts as progress today.", "A short, easy walk can ease cramps more than the couch will.", "Warm water first thing tends to help right now."],
+    follicular: ["Energy's on the rise — a good day to add a few extra steps.", "Often the easiest phase to start something new.", "Stay ahead on water today; low intake catches up fast."],
+    fertile: ["You're in the fertile window — a gentle note, not a to-do.", "Movement tends to feel easier around now."],
+    luteal: ["Cravings may show up — a glass of water first often helps.", "Slower days are normal here. Be kind about the pace.", "Sleep matters a little more than usual this week."]
+  };
+
+  /* ================= DATE HELPERS ================= */
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function toDate(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+  function daysBetween(a,b){ return Math.round((toDate(b) - toDate(a)) / 86400000); }
+  function addDays(s,n){ const d = toDate(s); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+  function fmtDate(s){ return toDate(s).toLocaleDateString('en-IN',{day:'numeric',month:'short'}); }
+  function fmtTime(d){ return d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}); }
+  function dow(s){ return toDate(s).toLocaleDateString('en-IN',{weekday:'short'}); }
+
+  /* ================= STORAGE ================= */
+  async function loadState(){
+    try{
+      const [p,c,d] = await Promise.allSettled([
+        window.storage.get('tides-profile', false),
+        window.storage.get('tides-cycle', false),
+        window.storage.get('tides-daily', false)
+      ]);
+      state.profile = (p.status==='fulfilled' && p.value) ? JSON.parse(p.value.value) : null;
+      state.cycle = (c.status==='fulfilled' && c.value) ? JSON.parse(c.value.value) : {periods:[], symptoms:{}};
+      state.daily = (d.status==='fulfilled' && d.value) ? JSON.parse(d.value.value) : {};
+    }catch(e){
+      state.profile = null; state.cycle = {periods:[], symptoms:{}}; state.daily = {};
+    }
+    boot();
+  }
+  async function saveProfile(){ try{ await window.storage.set('tides-profile', JSON.stringify(state.profile), false); }catch(e){} }
+  async function saveCycle(){ try{ await window.storage.set('tides-cycle', JSON.stringify(state.cycle), false); }catch(e){} }
+  async function saveDaily(){ try{ await window.storage.set('tides-daily', JSON.stringify(state.daily), false); }catch(e){} }
+
+  function today(){
+    const t = todayISO();
+    if(!state.daily[t]) state.daily[t] = { water:0, waterLog:[], steps:0 };
+    return state.daily[t];
+  }
+
+  /* ================= CYCLE MATH ================= */
+  function avgCycleLength(){
+    const periods = state.cycle.periods;
+    if(periods.length < 2) return state.profile.cycleLength;
+    const diffs = [];
+    for(let i=1;i<periods.length;i++) diffs.push(daysBetween(periods[i-1].start, periods[i].start));
+    const recent = diffs.slice(-6);
+    return Math.round(recent.reduce((a,b)=>a+b,0)/recent.length);
+  }
+
+  function cycleInfo(){
+    const periods = state.cycle.periods;
+    const last = periods[periods.length-1];
+    const cycleLen = avgCycleLength();
+    const periodLen = state.profile.periodLength;
+    const t = todayISO();
+    const since = daysBetween(last.start, t);
+    let dayInCycle = since % cycleLen; if(dayInCycle<0) dayInCycle += cycleLen;
+    const cycleDay = dayInCycle+1;
+    const cyclesElapsed = Math.floor(since/cycleLen);
+    const nextStart = addDays(last.start, (cyclesElapsed+1)*cycleLen);
+    const daysUntilNext = daysBetween(t, nextStart);
+    const ovulation = addDays(nextStart, -14);
+    const fertileStart = addDays(ovulation, -5);
+    const fertileEnd = addDays(ovulation, 1);
+    const isOnPeriod = last.end ? (t>=last.start && t<=last.end) : (since < periodLen);
+    let phaseKey, phaseLabel;
+    if(cycleDay <= periodLen){ phaseKey='menstrual'; phaseLabel='Menstrual phase'; }
+    else if(t>=fertileStart && t<=fertileEnd){ phaseKey='fertile'; phaseLabel='Fertile window'; }
+    else if(cycleDay < cycleLen*0.5){ phaseKey='follicular'; phaseLabel='Follicular phase'; }
+    else { phaseKey='luteal'; phaseLabel='Luteal phase'; }
+    const p = dayInCycle/cycleLen;
+    return { cycleDay, cycleLen, periodLen, daysUntilNext, nextStart, ovulation, fertileStart, fertileEnd, isOnPeriod, phaseKey, phaseLabel, p, last };
+  }
+
+  function moonDiv(p, size, glow){
+    // offset=0 -> fully dark (new moon, period start). offset=+-2R -> fully lit (full moon, mid-cycle).
+    const R = size/2;
+    const offset = (-2*R*Math.sin(Math.PI*p)).toFixed(1);
+    const wrap = glow ? 'hero-moon-wrap' : '';
+    return `<div class="${wrap}"><div class="moon" style="width:${size}px;height:${size}px;box-shadow:inset ${offset}px 0 0 0 var(--moon-light);"></div></div>`;
+  }
+
+  function orbitRing(ci){
+    const cx=46, cy=46, R=42;
+    const C = 2*Math.PI*R;
+    const periodFrac = ci.periodLen/ci.cycleLen;
+    const periodLen = periodFrac*C;
+
+    const wrapFrac = f => ((f % 1)+1)%1;
+    const fertileStartFrac = wrapFrac(daysBetween(ci.last.start, ci.fertileStart)/ci.cycleLen);
+    const fertileEndFrac = wrapFrac(daysBetween(ci.last.start, ci.fertileEnd)/ci.cycleLen);
+    let fertileSpan = fertileEndFrac - fertileStartFrac;
+    if(fertileSpan <= 0) fertileSpan += 1;
+    const fertileLen = fertileSpan*C;
+
+    const ang = -Math.PI/2 + ci.p*2*Math.PI;
+    const mx = (cx + R*Math.cos(ang)).toFixed(1);
+    const my = (cy + R*Math.sin(ang)).toFixed(1);
+
+    return `<svg viewBox="0 0 92 92" width="92" height="92">
+      <g transform="rotate(-90 ${cx} ${cy})">
+        <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3"/>
+        <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--rose)" stroke-width="3" stroke-linecap="round"
+          stroke-dasharray="${periodLen.toFixed(1)} ${(C-periodLen).toFixed(1)}" opacity="0.9"/>
+        <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--gold)" stroke-width="3" stroke-linecap="round"
+          stroke-dasharray="${fertileLen.toFixed(1)} ${(C-fertileLen).toFixed(1)}" stroke-dashoffset="${(-fertileStartFrac*C).toFixed(1)}" opacity="0.85"/>
+      </g>
+      <circle cx="${mx}" cy="${my}" r="7" fill="var(--rose)" opacity="0.25"/>
+      <circle cx="${mx}" cy="${my}" r="3.2" fill="var(--rose)"/>
+    </svg>`;
+  }
+
+  /* ================= RENDER: HOME ================= */
+  function renderHome(){
+    const ci = cycleInfo();
+    const d = today();
+    const wGoal = state.profile.waterGoal, sGoal = state.profile.stepGoal;
+    const wPct = Math.min(100, Math.round((d.water/wGoal)*100));
+    const sPct = Math.min(100, Math.round((d.steps/sGoal)*100));
+    const tipsArr = TIPS[ci.phaseKey];
+    const tip = tipsArr[toDate(todayISO()).getDate() % tipsArr.length];
+
+    const heroCta = ci.isOnPeriod
+      ? `<button class="hero-cta ghost" onclick="App.logPeriodEnd()">Log period end</button>`
+      : `<button class="hero-cta" onclick="App.logPeriodStart()">Log period start</button>`;
+
+    const heroClass = justLogged ? 'card hero-card full just-logged' : 'card hero-card full';
+    justLogged = false;
+
+    document.getElementById('screen-home').innerHTML = `
+      <div class="bento">
+        <div class="${heroClass}">
+          <div class="moon-orbit">
+            ${orbitRing(ci)}
+            ${moonDiv(ci.p, 74, true)}
+          </div>
+          <div class="hero-info">
+            <div class="phase">${ci.phaseLabel}</div>
+            <div class="day serif">Day ${ci.cycleDay}</div>
+            <div class="sub">${ci.isOnPeriod ? `Period day ${daysBetween(ci.last.start, todayISO())+1}` : `Next period in ${ci.daysUntilNext} day${ci.daysUntilNext===1?'':'s'} · ${fmtDate(ci.nextStart)}`}</div>
+            ${heroCta}
+          </div>
+        </div>
+
+        <div class="card mini-tile water" onclick="App.go('hydrate')">
+          <div class="row"><span class="label"><span class="icon" style="width:15px;height:15px;display:inline-flex;vertical-align:-2px">${ICONS.drop}</span> Water</span></div>
+          <div class="val">${d.water}<small> / ${wGoal} ml</small></div>
+          <div class="bar-track"><div class="bar-fill water" style="width:${wPct}%"></div></div>
+        </div>
+
+        <div class="card mini-tile steps" onclick="App.go('steps')">
+          <div class="row"><span class="label"><span class="icon" style="width:15px;height:15px;display:inline-flex;vertical-align:-2px">${ICONS.wave}</span> Steps</span></div>
+          <div class="val">${d.steps}<small> / ${sGoal}</small></div>
+          <div class="bar-track"><div class="bar-fill steps" style="width:${sPct}%"></div></div>
+        </div>
+
+        <div class="card tip-card full">
+          <div class="dot"></div>
+          <p>${tip}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  /* ================= RENDER: CYCLE ================= */
+  function renderCycle(){
+    const ci = cycleInfo();
+    const t = todayISO();
+    const strip = [];
+    for(let i=-3;i<=10;i++){
+      const ds = addDays(t,i);
+      const since = daysBetween(ci.last.start, ds);
+      let dic = since % ci.cycleLen; if(dic<0) dic+=ci.cycleLen;
+      const p = dic/ci.cycleLen;
+      strip.push(`<div class="moon-day ${i===0?'today':''}">
+        ${moonDiv(p, 30, false)}
+        <span class="lbl">${i===0?'Today':dow(ds)}</span>
+        <span class="dnum">${toDate(ds).getDate()}</span>
+      </div>`);
+    }
+
+    const todayTags = state.cycle.symptoms[t] || [];
+    const tags = SYMPTOM_TAGS.map(tag => `<button class="chip tag ${todayTags.includes(tag)?'selected':''}" onclick="App.toggleSymptom('${tag}')">${tag}</button>`).join('');
+
+    const history = [...state.cycle.periods].reverse().slice(0,6).map(pd => {
+      const len = pd.end ? (daysBetween(pd.start,pd.end)+1)+' days' : 'ongoing';
+      return `<div class="history-item"><span>${fmtDate(pd.start)}</span><span class="len">${len}</span></div>`;
+    }).join('') || '<div class="history-item"><span>No history yet</span></div>';
+
+    document.getElementById('screen-cycle').innerHTML = `
+      <div class="section-label">This stretch</div>
+      <div class="moon-strip">${strip.join('')}</div>
+
+      <div class="card" style="margin-top:6px;">
+        <div style="font-size:.8rem;color:var(--text-dim);margin-bottom:8px;">Log a period on any date — today, or one you missed</div>
+        <input id="logDate" type="date" value="${t}" max="${t}"
+          style="width:100%;background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-size:.85rem;margin-bottom:10px;" />
+        <div class="chip-row" style="margin-top:0;">
+          <button class="chip" style="background:var(--rose-dim);border-color:var(--rose);color:var(--rose);" onclick="App.logPeriodStartOn()">Mark as start</button>
+          <button class="chip" onclick="App.logPeriodEndOn()">Mark as end</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:6px;">
+        <div class="predict-row"><span class="k">Next period</span><span class="v">${fmtDate(ci.nextStart)} · in ${ci.daysUntilNext}d</span></div>
+        <div class="predict-row"><span class="k">Fertile window</span><span class="v">${fmtDate(ci.fertileStart)} – ${fmtDate(ci.fertileEnd)}</span></div>
+        <div class="predict-row"><span class="k">Average cycle</span><span class="v">${ci.cycleLen} days</span></div>
+      </div>
+
+      <div class="section-label">How's today feeling?</div>
+      <div class="chip-row">${tags}</div>
+
+      <div class="section-label">Past cycles</div>
+      <div class="card">${history}</div>
+    `;
+  }
+
+  /* ================= RENDER: HYDRATE ================= */
+  function renderHydrate(){
+    const d = today();
+    const goal = state.profile.waterGoal;
+    const pct = Math.min(100, Math.round((d.water/goal)*100));
+    const on = !!state.profile.remindersOn;
+    const interval = state.profile.reminderInterval || 90;
+    const notif = notifyPermission();
+
+    const logRows = [...d.waterLog].reverse().map((e,i) => {
+      const realIdx = d.waterLog.length-1-i;
+      return `<div class="log-row"><span>${e.time} · ${e.amount} ml</span><button class="rm" onclick="App.removeWater(${realIdx})">${ICONS.close}</button></div>`;
+    }).join('') || '<div class="log-row"><span style="color:var(--text-faint)">Nothing logged yet today</span></div>';
+
+    document.getElementById('screen-hydrate').innerHTML = `
+      <div class="glass"><div class="fill" style="height:${pct}%"></div><div class="amt">${d.water} ml</div></div>
+      <div class="goal-edit">
+        <span>Goal: ${goal} ml</span>
+        <button class="link" onclick="App.editWaterGoal()">change</button>
+      </div>
+
+      <div class="section-label">Add water</div>
+      <div class="chip-row">
+        <button class="chip" onclick="App.addWater(150)">+150 ml</button>
+        <button class="chip" onclick="App.addWater(250)">+250 ml</button>
+        <button class="chip" onclick="App.addWater(500)">+500 ml</button>
+      </div>
+      <div class="custom-add">
+        <input id="customWater" type="number" min="1" placeholder="Custom amount (ml)" />
+        <button onclick="App.addCustomWater()">Add</button>
+      </div>
+
+      <div class="section-label">Reminders</div>
+      <div class="card">
+        <div class="reminder-row">
+          <span style="font-size:.85rem">Remind me to drink water</span>
+          <div class="toggle ${on?'on':''}" onclick="App.toggleReminder()"><div class="knob"></div></div>
+        </div>
+        ${on ? `
+        <div style="margin-top:12px;">
+          <span style="font-size:.78rem;color:var(--text-faint)">Every</span>
+          <select id="reminderInterval" onchange="App.setReminderInterval(this.value)" style="background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 8px;margin-left:6px;">
+            <option value="60" ${interval==60?'selected':''}>1 hour</option>
+            <option value="90" ${interval==90?'selected':''}>1.5 hours</option>
+            <option value="120" ${interval==120?'selected':''}>2 hours</option>
+          </select>
+        </div>
+        <p style="font-size:.72rem;color:var(--text-faint);margin-top:10px;">${
+          notif==='granted' ? 'Notifications are on — a real alert will arrive even if this tab is in the background.' :
+          notif==='denied' ? 'Notifications are blocked in this browser. You still get an in-app reminder while this tab is open.' :
+          notif==='unsupported' ? 'This browser cannot send notifications — you still get an in-app reminder while this tab is open.' :
+          'Allow notifications when prompted, for a real alert. Otherwise you still get an in-app reminder while this tab is open.'
+        }</p>
+        ` : ''}
+      </div>
+
+      <div class="section-label">Today's log</div>
+      <div class="card log-list">${logRows}</div>
+    `;
+  }
+
+  /* ================= RENDER: STEPS ================= */
+  function renderSteps(){
+    const d = today();
+    const goal = state.profile.stepGoal;
+    const pct = Math.min(100, Math.round((d.steps/goal)*100));
+
+    const t = todayISO();
+    const week = [];
+    for(let i=6;i>=0;i--){
+      const ds = addDays(t,-i);
+      const val = (state.daily[ds] && state.daily[ds].steps) || 0;
+      const maxV = Math.max(goal, val, 1);
+      const h = Math.max(4, Math.round((val/maxV)*90));
+      week.push(`<div class="col"><div class="b ${val>=goal?'hit':''}" style="height:${h}px"></div><span class="lbl">${dow(ds)[0]}</span></div>`);
+    }
+
+    document.getElementById('screen-steps').innerHTML = `
+      <div class="card">
+        <div class="row" style="display:flex;justify-content:space-between;align-items:baseline;">
+          <span class="day serif" style="font-size:1.6rem">${d.steps}</span>
+          <span style="font-size:.8rem;color:var(--text-faint)">goal ${goal}</span>
+        </div>
+        <div class="current-track"><div class="current-fill" style="width:${pct}%"></div></div>
+        <div class="goal-edit"><button class="link" style="color:var(--gold)" onclick="App.editStepGoal()">change goal</button></div>
+      </div>
+
+      <div class="section-label">Add steps</div>
+      <div class="chip-row">
+        <button class="chip" onclick="App.addSteps(500)">+500</button>
+        <button class="chip" onclick="App.addSteps(1000)">+1,000</button>
+        <button class="chip" onclick="App.addSteps(2000)">+2,000</button>
+      </div>
+      <div class="custom-add">
+        <input id="setSteps" type="number" min="0" placeholder="Set today's exact total" />
+        <button onclick="App.setStepsExact()">Set</button>
+      </div>
+      <p style="font-size:.72rem;color:var(--text-faint);margin-top:8px;">No phone sensor here to auto-count — log manually for now, or connect Google Fit / Health once this becomes a real app.</p>
+
+      <div class="section-label">Last 7 days</div>
+      <div class="card"><div class="week-chart">${week.join('')}</div></div>
+    `;
+  }
+
+  /* ================= NAV / SCREEN SWITCHING ================= */
+  function go(tab){
+    activeTab = tab;
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-'+tab).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+    if(tab==='home') renderHome();
+    if(tab==='cycle') renderCycle();
+    if(tab==='hydrate') renderHydrate();
+    if(tab==='steps') renderSteps();
+  }
+
+  function renderAll(){ renderHome(); renderCycle(); renderHydrate(); renderSteps(); }
+
+  /* ================= TOAST ================= */
+  let toastTimer;
+  function showToast(msg){
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>el.classList.remove('show'), 2600);
+  }
+
+  /* ================= ACTIONS ================= */
+  const App = {
+    go,
+    logPeriodStart(){
+      const t = todayISO();
+      const periods = state.cycle.periods;
+      if(periods.length && !periods[periods.length-1].end){
+        periods[periods.length-1].end = addDays(t,-1);
+      }
+      periods.push({start:t, end:null});
+      justLogged = true;
+      saveCycle(); renderAll(); showToast('Period logged — take it easy today');
+    },
+    logPeriodEnd(){
+      const periods = state.cycle.periods;
+      if(periods.length) periods[periods.length-1].end = todayISO();
+      justLogged = true;
+      saveCycle(); renderAll(); showToast('Period end logged');
+    },
+    logPeriodStartOn(){
+      const inp = document.getElementById('logDate');
+      const dateVal = (inp && inp.value) ? inp.value : todayISO();
+      let periods = state.cycle.periods.filter(pd => pd.start !== dateVal);
+      periods.push({start: dateVal, end: null});
+      periods.sort((a,b)=> a.start < b.start ? -1 : a.start > b.start ? 1 : 0);
+      for(let i=0;i<periods.length-1;i++){
+        if(!periods[i].end) periods[i].end = addDays(periods[i+1].start, -1);
+      }
+      state.cycle.periods = periods;
+      justLogged = (dateVal === todayISO());
+      saveCycle(); renderAll(); showToast('Period start set to ' + fmtDate(dateVal));
+    },
+    logPeriodEndOn(){
+      const inp = document.getElementById('logDate');
+      const dateVal = (inp && inp.value) ? inp.value : todayISO();
+      const periods = state.cycle.periods;
+      let candidate = null;
+      for(const pd of periods){ if(pd.start <= dateVal) candidate = pd; else break; }
+      if(candidate){ candidate.end = dateVal; }
+      justLogged = (dateVal === todayISO());
+      saveCycle(); renderAll(); showToast('Period end set to ' + fmtDate(dateVal));
+    },
+    toggleSymptom(tag){
+      const t = todayISO();
+      const list = state.cycle.symptoms[t] || [];
+      const idx = list.indexOf(tag);
+      if(idx>-1) list.splice(idx,1); else list.push(tag);
+      state.cycle.symptoms[t] = list;
+      saveCycle(); renderCycle();
+    },
+    addWater(amt){
+      const d = today();
+      d.water += amt;
+      d.waterLog.push({time: fmtTime(new Date()), amount: amt});
+      saveDaily(); renderHydrate(); renderHome();
+      showToast(`+${amt} ml logged`);
+    },
+    addCustomWater(){
+      const inp = document.getElementById('customWater');
+      const v = parseInt(inp.value,10);
+      if(v>0){ App.addWater(v); inp.value=''; }
+    },
+    removeWater(idx){
+      const d = today();
+      const e = d.waterLog[idx];
+      if(e){ d.water = Math.max(0, d.water - e.amount); d.waterLog.splice(idx,1); saveDaily(); renderHydrate(); renderHome(); }
+    },
+    editWaterGoal(){
+      const v = prompt('Daily water goal (ml)', state.profile.waterGoal);
+      const n = parseInt(v,10);
+      if(n>0){ state.profile.waterGoal = n; saveProfile(); renderHydrate(); renderHome(); }
+    },
+    toggleReminder(){
+      state.profile.remindersOn = !state.profile.remindersOn;
+      if(state.profile.remindersOn && typeof Notification !== 'undefined' && Notification.permission === 'default'){
+        try{ Notification.requestPermission().then(()=> renderHydrate()); }catch(e){}
+      }
+      saveProfile(); renderHydrate(); armReminder();
+    },
+    setReminderInterval(v){
+      state.profile.reminderInterval = parseInt(v,10);
+      saveProfile(); armReminder();
+    },
+    addSteps(amt){
+      const d = today();
+      d.steps += amt;
+      saveDaily(); renderSteps(); renderHome();
+      showToast(`+${amt} steps logged`);
+    },
+    setStepsExact(){
+      const inp = document.getElementById('setSteps');
+      const v = parseInt(inp.value,10);
+      if(v>=0){ today().steps = v; saveDaily(); renderSteps(); renderHome(); inp.value=''; }
+    },
+    editStepGoal(){
+      const v = prompt('Daily step goal', state.profile.stepGoal);
+      const n = parseInt(v,10);
+      if(n>0){ state.profile.stepGoal = n; saveProfile(); renderSteps(); renderHome(); }
+    },
+    openSettings(){
+      document.getElementById('sheetBackdrop').classList.add('show');
+      document.getElementById('settingsSheet').classList.add('show');
+      const p = state.profile;
+      document.getElementById('setName').value = p.name;
+      document.getElementById('setLastStart').value = state.cycle.periods[state.cycle.periods.length-1].start;
+      document.getElementById('setCycleLen').value = p.cycleLength;
+      document.getElementById('setPeriodLen').value = p.periodLength;
+      document.getElementById('setWaterGoal').value = p.waterGoal;
+      document.getElementById('setStepGoal').value = p.stepGoal;
+    },
+    closeSettings(){
+      document.getElementById('sheetBackdrop').classList.remove('show');
+      document.getElementById('settingsSheet').classList.remove('show');
+    },
+    saveSettings(){
+      const p = state.profile;
+      p.name = document.getElementById('setName').value.trim() || p.name;
+      p.cycleLength = parseInt(document.getElementById('setCycleLen').value,10) || p.cycleLength;
+      p.periodLength = parseInt(document.getElementById('setPeriodLen').value,10) || p.periodLength;
+      p.waterGoal = parseInt(document.getElementById('setWaterGoal').value,10) || p.waterGoal;
+      p.stepGoal = parseInt(document.getElementById('setStepGoal').value,10) || p.stepGoal;
+      const newStart = document.getElementById('setLastStart').value;
+      const periods = state.cycle.periods;
+      const last = periods[periods.length-1];
+      const prev = periods[periods.length-2];
+      if(newStart && newStart !== last.start && (!prev || newStart > prev.start)){
+        last.start = newStart;
+      }
+      saveProfile(); saveCycle(); App.closeSettings(); renderAll();
+      showToast('Saved');
+    },
+    resetAll(){
+      if(!confirm('Erase all Tides data on this device? This cannot be undone.')) return;
+      Promise.allSettled([
+        window.storage.delete('tides-profile', false),
+        window.storage.delete('tides-cycle', false),
+        window.storage.delete('tides-daily', false)
+      ]).finally(()=>{ location.reload(); });
+    },
+    submitOnboarding(){
+      const name = document.getElementById('obName').value.trim() || 'there';
+      const start = document.getElementById('obStart').value || todayISO();
+      const cycleLength = parseInt(document.getElementById('obCycleLen').value,10) || 28;
+      const periodLength = parseInt(document.getElementById('obPeriodLen').value,10) || 5;
+      const waterGoal = parseInt(document.getElementById('obWaterGoal').value,10) || 2500;
+      const stepGoal = parseInt(document.getElementById('obStepGoal').value,10) || 8000;
+      state.profile = { name, cycleLength, periodLength, waterGoal, stepGoal, remindersOn:false, reminderInterval:90 };
+      state.cycle = { periods: [{start, end:null}], symptoms:{} };
+      state.daily = {};
+      saveProfile(); saveCycle(); saveDaily();
+      showApp();
+    }
+  };
+  window.App = App;
+
+  /* ================= REMINDER TIMER ================= */
+  function notifyPermission(){
+    return (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported';
+  }
+  function armReminder(){
+    if(reminderTimer){ clearInterval(reminderTimer); reminderTimer = null; }
+    if(state.profile && state.profile.remindersOn){
+      const mins = state.profile.reminderInterval || 90;
+      reminderTimer = setInterval(()=>{
+        const d = today();
+        const msg = `${d.water} / ${state.profile.waterGoal} ml so far — time for some water`;
+        if(notifyPermission() === 'granted'){
+          try{ new Notification('Tides', { body: msg }); }catch(e){ showToast(msg); }
+        } else {
+          showToast(msg);
+        }
+      }, mins*60000);
+    }
+  }
+
+  /* ================= BOOT / SCREENS SCAFFOLD ================= */
+  function showOnboarding(){
+    document.getElementById('app').innerHTML = `
+      <div class="onboarding">
+        <h1 class="serif">Tides</h1>
+        <p class="lead">One gentle place for her cycle, water and steps — reading the body's own rhythm instead of fighting it.</p>
+        <div class="field"><label>Her name</label><input id="obName" type="text" placeholder="e.g. Aanya" /></div>
+        <div class="field"><label>Last period start date</label><input id="obStart" type="date" value="${todayISO()}" /></div>
+        <div class="field-row">
+          <div class="field"><label>Avg. cycle length (days)</label><input id="obCycleLen" type="number" value="28" /></div>
+          <div class="field"><label>Period length (days)</label><input id="obPeriodLen" type="number" value="5" /></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Daily water goal (ml)</label><input id="obWaterGoal" type="number" value="2500" /></div>
+          <div class="field"><label>Daily step goal</label><input id="obStepGoal" type="number" value="8000" /></div>
+        </div>
+        <button class="primary-btn" onclick="App.submitOnboarding()">Begin</button>
+      </div>
+    `;
+  }
+
+  function showApp(){
+    document.getElementById('app').innerHTML = `
+      <div class="app-header">
+        <div class="brand">
+          <span class="name serif">Tides</span>
+          <span class="tag">hi, ${state.profile.name}</span>
+        </div>
+        <button class="icon-btn" onclick="App.openSettings()"><span class="icon">${ICONS.sliders}</span></button>
+      </div>
+      <main class="screens">
+        <section id="screen-home" class="screen active"></section>
+        <section id="screen-cycle" class="screen"></section>
+        <section id="screen-hydrate" class="screen"></section>
+        <section id="screen-steps" class="screen"></section>
+      </main>
+      <nav class="bottom-nav">
+        <button class="nav-btn active" data-tab="home" onclick="App.go('home')"><span class="icon">${ICONS.home}</span>Home</button>
+        <button class="nav-btn" data-tab="cycle" onclick="App.go('cycle')"><span class="icon">${ICONS.moon}</span>Cycle</button>
+        <button class="nav-btn" data-tab="hydrate" onclick="App.go('hydrate')"><span class="icon">${ICONS.drop}</span>Hydrate</button>
+        <button class="nav-btn" data-tab="steps" onclick="App.go('steps')"><span class="icon">${ICONS.wave}</span>Steps</button>
+      </nav>
+      <div class="sheet-backdrop" id="sheetBackdrop" onclick="App.closeSettings()"></div>
+      <div class="sheet" id="settingsSheet">
+        <button class="icon-btn sheet-close" onclick="App.closeSettings()"><span class="icon">${ICONS.close}</span></button>
+        <h2 class="serif">Settings</h2>
+        <div class="field"><label>Name</label><input id="setName" type="text" /></div>
+        <div class="field"><label>Last period start (fix if wrong)</label><input id="setLastStart" type="date" /></div>
+        <div class="field-row">
+          <div class="field"><label>Avg. cycle length</label><input id="setCycleLen" type="number" /></div>
+          <div class="field"><label>Period length</label><input id="setPeriodLen" type="number" /></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Water goal (ml)</label><input id="setWaterGoal" type="number" /></div>
+          <div class="field"><label>Step goal</label><input id="setStepGoal" type="number" /></div>
+        </div>
+        <button class="primary-btn" onclick="App.saveSettings()">Save</button>
+        <button class="danger-btn" onclick="App.resetAll()">Erase all data</button>
+      </div>
+      <div class="toast" id="toast"></div>
+    `;
+    renderAll();
+    armReminder();
+  }
+
+  function boot(){
+    if(state.profile){ showApp(); } else { showOnboarding(); }
+  }
+
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js').catch(function(){});
+    });
+  }
+
+  loadState();
+})();
+</script>
+</body>
+</html>
