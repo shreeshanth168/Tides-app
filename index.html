@@ -253,6 +253,10 @@
   .toggle .knob{ position:absolute; top:2px; left:2px; width:19px; height:19px; border-radius:50%; background:var(--text-faint); transition:all .2s ease; }
   .toggle.on{ background:var(--teal-dim); border-color:var(--teal); }
   .toggle.on .knob{ left:23px; background:var(--teal); }
+  .screen#screen-steps .toggle.on{ background:var(--gold-dim); border-color:var(--gold); }
+  .screen#screen-steps .toggle.on .knob{ background:var(--gold); }
+  .pulse-dot{ width:8px;height:8px;border-radius:50%;background:var(--gold); flex-shrink:0; animation: pulseDot 1.4s ease-in-out infinite; }
+  @keyframes pulseDot{ 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:.4; transform:scale(.7); } }
 
   .log-list{ margin-top:6px; }
   .log-row{ display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); font-size:.82rem; }
@@ -403,6 +407,7 @@
   let activeTab = 'home';
   let reminderTimer = null;
   let justLogged = false;
+  let autoTrackActive = false;
 
   const SYMPTOM_TAGS = ['Cramps','Headache','Bloating','Fatigue','Mood swings','Backache','Cravings','Energetic','Calm','Happy'];
 
@@ -703,6 +708,9 @@
       week.push(`<div class="col"><div class="b ${val>=goal?'hit':''}" style="height:${h}px"></div><span class="lbl">${dow(ds)[0]}</span></div>`);
     }
 
+    const motionOk = (typeof DeviceMotionEvent !== 'undefined');
+    const trackLabel = autoTrackActive ? 'Tracking — tap to stop' : 'Start automatic counting';
+
     document.getElementById('screen-steps').innerHTML = `
       <div class="card">
         <div class="row" style="display:flex;justify-content:space-between;align-items:baseline;">
@@ -713,7 +721,22 @@
         <div class="goal-edit"><button class="link" style="color:var(--gold)" onclick="App.editStepGoal()">change goal</button></div>
       </div>
 
-      <div class="section-label">Add steps</div>
+      <div class="section-label">Automatic tracking</div>
+      <div class="card">
+        <div class="reminder-row">
+          <span style="font-size:.85rem;display:flex;align-items:center;gap:8px;">
+            ${autoTrackActive ? '<span class="pulse-dot"></span>' : ''}${trackLabel}
+          </span>
+          <div class="toggle ${autoTrackActive?'on':''}" onclick="App.toggleAutoTrack()"><div class="knob"></div></div>
+        </div>
+        <p style="font-size:.72rem;color:var(--text-faint);margin-top:10px;">
+          ${motionOk
+            ? 'Uses the phone\u2019s motion sensor to count steps while this app is open on screen — it can\u2019t count in the background or with the screen off, and it\u2019s a rough estimate, not as accurate as Google Fit. Use "Set today\u2019s exact total" below to correct it any time.'
+            : 'This browser doesn\u2019t expose a motion sensor, so automatic counting isn\u2019t available here — log manually below instead.'}
+        </p>
+      </div>
+
+      <div class="section-label">Add manually</div>
       <div class="chip-row">
         <button class="chip" onclick="App.addSteps(500)">+500</button>
         <button class="chip" onclick="App.addSteps(1000)">+1,000</button>
@@ -723,7 +746,6 @@
         <input id="setSteps" type="number" min="0" placeholder="Set today's exact total" />
         <button onclick="App.setStepsExact()">Set</button>
       </div>
-      <p style="font-size:.72rem;color:var(--text-faint);margin-top:8px;">No phone sensor here to auto-count — log manually for now, or connect Google Fit / Health once this becomes a real app.</p>
 
       <div class="section-label">Last 7 days</div>
       <div class="card"><div class="week-chart">${week.join('')}</div></div>
@@ -843,6 +865,17 @@
       saveDaily(); renderSteps(); renderHome();
       showToast(`+${amt} steps logged`);
     },
+    async toggleAutoTrack(){
+      if(autoTrackActive){
+        stopAutoTrack();
+        renderSteps();
+        showToast('Automatic counting stopped');
+      } else {
+        const ok = await startAutoTrack();
+        renderSteps();
+        showToast(ok ? 'Tracking steps while the app is open' : 'Motion access was not granted');
+      }
+    },
     setStepsExact(){
       const inp = document.getElementById('setSteps');
       const v = parseInt(inp.value,10);
@@ -908,6 +941,65 @@
     }
   };
   window.App = App;
+
+  /* ================= STEP DETECTION (accelerometer) ================= */
+  let stepLastMag = 0;
+  let stepLastTime = 0;
+  const STEP_THRESHOLD = 11.5;   // m/s^2 magnitude spike considered a footfall
+  const STEP_MIN_GAP = 300;      // ms between counted steps, avoids double-counting one footfall
+
+  function handleMotion(e){
+    const acc = e.accelerationIncludingGravity;
+    if(!acc || acc.x===null || acc.x===undefined) return;
+    const mag = Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z);
+    const now = Date.now();
+    if(mag > STEP_THRESHOLD && stepLastMag <= STEP_THRESHOLD && (now - stepLastTime) > STEP_MIN_GAP){
+      stepLastTime = now;
+      const d = today();
+      d.steps += 1;
+      saveDaily();
+      if(activeTab==='steps') renderStepsCountOnly();
+      if(activeTab==='home') renderHomeCountsOnly();
+    }
+    stepLastMag = mag;
+  }
+
+  function renderStepsCountOnly(){
+    const d = today();
+    const goal = state.profile.stepGoal;
+    const pct = Math.min(100, Math.round((d.steps/goal)*100));
+    const num = document.querySelector('#screen-steps .day.serif');
+    const fill = document.querySelector('#screen-steps .current-fill');
+    if(num) num.textContent = d.steps;
+    if(fill) fill.style.width = pct+'%';
+  }
+  function renderHomeCountsOnly(){
+    const d = today();
+    const goal = state.profile.stepGoal;
+    const pct = Math.min(100, Math.round((d.steps/goal)*100));
+    const tile = document.querySelector('.mini-tile.steps .val');
+    const bar = document.querySelector('.mini-tile.steps .bar-fill');
+    if(tile) tile.innerHTML = d.steps + '<small> / '+goal+'</small>';
+    if(bar) bar.style.width = pct+'%';
+  }
+
+  async function startAutoTrack(){
+    if(typeof DeviceMotionEvent === 'undefined') return false;
+    if(typeof DeviceMotionEvent.requestPermission === 'function'){
+      try{
+        const res = await DeviceMotionEvent.requestPermission();
+        if(res !== 'granted') return false;
+      }catch(e){ return false; }
+    }
+    stepLastMag = 0; stepLastTime = 0;
+    window.addEventListener('devicemotion', handleMotion);
+    autoTrackActive = true;
+    return true;
+  }
+  function stopAutoTrack(){
+    window.removeEventListener('devicemotion', handleMotion);
+    autoTrackActive = false;
+  }
 
   /* ================= REMINDER TIMER ================= */
   function notifyPermission(){
